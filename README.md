@@ -79,3 +79,4 @@ Acknowledgements:
 * ProfMobius for the overlay API.
 * taelnia for extrautils compatibility patch.
 * LoneStar144 for minimap border and arrow textures.
+* Melodeiro for updated marker dialog

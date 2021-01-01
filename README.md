@@ -15,7 +15,7 @@ are the issues I encountered when setting up MCP and how to fix them:
 - Forge install script fails to download mcp726a.zip:
   - The MCP download links are dead. Use a newer one. The one provided in the
     Minecraft Wiki is
-    `https://download1335.mediafire.com/0cwqjrbuz9lg/07d59w314ewjfth/mcp726a.zip`
+    `https://minecraft.gamepedia.com/Programs_and_editors/Mod_Coder_Pack`
     and it worked fine for me as of 2020. The link can be changed in
     `forge/fml/mc_versions.cfg`, scroll down to the `[1.4.7]` section and change
     the field `mcp_url` to the new URL.

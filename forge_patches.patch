@@ -1,0 +1,341 @@
+diff --color -ru forge/patches/minecraft/net/minecraft/client/gui/achievement/GuiAchievements.java.patch forge/patches_fixed/minecraft/net/minecraft/client/gui/achievement/GuiAchievements.java.patch
+--- forge/patches/minecraft/net/minecraft/client/gui/achievement/GuiAchievements.java.patch	2013-02-24 23:57:32.000000000 +0000
++++ forge/patches_fixed/minecraft/net/minecraft/client/gui/achievement/GuiAchievements.java.patch	2021-01-01 20:49:44.691565818 +0000
+@@ -89,8 +89,8 @@
+                  var24 = var33.displayColumn * 24 - var4 + 11 + var10;
+                  var25 = var33.displayRow * 24 - var5 + 11 + var11;
+ @@ -345,9 +374,9 @@
+-         int var42;
+-         int var41;
++         int var39;
++         int var40;
+  
+ -        for (var24 = 0; var24 < AchievementList.achievementList.size(); ++var24)
+ -        {
+diff --color -ru forge/patches/minecraft/net/minecraft/client/gui/GuiIngame.java.patch forge/patches_fixed/minecraft/net/minecraft/client/gui/GuiIngame.java.patch
+--- forge/patches/minecraft/net/minecraft/client/gui/GuiIngame.java.patch	2013-02-24 23:57:32.000000000 +0000
++++ forge/patches_fixed/minecraft/net/minecraft/client/gui/GuiIngame.java.patch	2021-01-01 20:13:42.314805247 +0000
+@@ -11,8 +11,8 @@
+  {
+ @@ -159,7 +161,7 @@
+  
+-                 var47 = var7 - 39;
+-                 var22 = var47 - 10;
++                 var46 = var7 - 39;
++                 var22 = var46 - 10;
+ -                var23 = this.mc.thePlayer.getTotalArmorValue();
+ +                var23 = ForgeHooks.getTotalArmorValue(mc.thePlayer);
+                  var24 = -1;
+diff --color -ru forge/patches/minecraft/net/minecraft/client/renderer/entity/RenderPlayer.java.patch forge/patches_fixed/minecraft/net/minecraft/client/renderer/entity/RenderPlayer.java.patch
+--- forge/patches/minecraft/net/minecraft/client/renderer/entity/RenderPlayer.java.patch	2013-02-24 23:57:32.000000000 +0000
++++ forge/patches_fixed/minecraft/net/minecraft/client/renderer/entity/RenderPlayer.java.patch	2021-01-01 20:23:34.238823606 +0000
+@@ -71,23 +71,23 @@
+                      var5 = 0.625F;
+                      GL11.glTranslatef(0.0F, -0.25F, 0.0F);
+ @@ -359,7 +371,10 @@
+-                 var23 = var21.getItemUseAction();
++                 var25 = var22.getItemUseAction();
+              }
+  
+--            if (var21.itemID < 256 && RenderBlocks.renderItemIn3d(Block.blocksList[var21.itemID].getRenderType()))
+-+            IItemRenderer customRenderer = MinecraftForgeClient.getItemRenderer(var21, EQUIPPED);
+-+            boolean is3D = (customRenderer != null && customRenderer.shouldUseRenderHelper(EQUIPPED, var21, BLOCK_3D));
++-            if (var22.itemID < 256 && RenderBlocks.renderItemIn3d(Block.blocksList[var22.itemID].getRenderType()))
+++            IItemRenderer customRenderer = MinecraftForgeClient.getItemRenderer(var22, EQUIPPED);
+++            boolean is3D = (customRenderer != null && customRenderer.shouldUseRenderHelper(EQUIPPED, var22, BLOCK_3D));
+ +
+-+            if (var21.getItem() instanceof ItemBlock && (is3D || RenderBlocks.renderItemIn3d(Block.blocksList[var21.itemID].getRenderType())))
+++            if (var22.getItem() instanceof ItemBlock && (is3D || RenderBlocks.renderItemIn3d(Block.blocksList[var22.itemID].getRenderType())))
+              {
+                  var7 = 0.5F;
+                  GL11.glTranslatef(0.0F, 0.1875F, -0.3125F);
+ @@ -416,7 +431,7 @@
+  
+-             if (var21.getItem().requiresMultipleRenderPasses())
++             if (var22.getItem().requiresMultipleRenderPasses())
+              {
+ -                for (var27 = 0; var27 <= 1; ++var27)
+-+                for (var27 = 0; var27 < var21.getItem().getRenderPasses(var21.getItemDamage()); ++var27)
+++                for (var27 = 0; var27 < var22.getItem().getRenderPasses(var22.getItemDamage()); ++var27)
+                  {
+-                     int var26 = var21.getItem().getColorFromItemStack(var21, var27);
++                     int var26 = var22.getItem().getColorFromItemStack(var22, var27);
+                      var28 = (float)(var26 >> 16 & 255) / 255.0F;
+diff --color -ru forge/patches/minecraft/net/minecraft/client/renderer/ItemRenderer.java.patch forge/patches_fixed/minecraft/net/minecraft/client/renderer/ItemRenderer.java.patch
+--- forge/patches/minecraft/net/minecraft/client/renderer/ItemRenderer.java.patch	2013-02-24 23:57:32.000000000 +0000
++++ forge/patches_fixed/minecraft/net/minecraft/client/renderer/ItemRenderer.java.patch	2021-01-01 20:46:31.115514011 +0000
+@@ -71,11 +71,11 @@
+ +            IItemRenderer custom = MinecraftForgeClient.getItemRenderer(var17, FIRST_PERSON_MAP);
+              GL11.glPushMatrix();
+              var7 = 0.8F;
+-             var20 = var3.getSwingProgress(par1);
++             var19 = var3.getSwingProgress(par1);
+ @@ -346,11 +349,17 @@
+-             var28.addVertexWithUV((double)(128 + var27), (double)(0 - var27), 0.0D, 1.0D, 0.0D);
+-             var28.addVertexWithUV((double)(0 - var27), (double)(0 - var27), 0.0D, 0.0D, 0.0D);
+-             var28.draw();
++             var27.addVertexWithUV((double)(128 + var28), (double)(0 - var28), 0.0D, 1.0D, 0.0D);
++             var27.addVertexWithUV((double)(0 - var28), (double)(0 - var28), 0.0D, 0.0D, 0.0D);
++             var27.draw();
+ -            MapData var16 = Item.map.getMapData(var17, this.mc.theWorld);
+ -
+ -            if (var16 != null)
+diff --color -ru forge/patches/minecraft/net/minecraft/client/renderer/RenderBlocks.java.patch forge/patches_fixed/minecraft/net/minecraft/client/renderer/RenderBlocks.java.patch
+--- forge/patches/minecraft/net/minecraft/client/renderer/RenderBlocks.java.patch	2013-02-24 23:57:32.000000000 +0000
++++ forge/patches_fixed/minecraft/net/minecraft/client/renderer/RenderBlocks.java.patch	2021-01-01 20:48:11.422541556 +0000
+@@ -38,8 +38,8 @@
+          var29 = var27 & 240;
+          var30 = (double)((float)var28 / 256.0F);
+ @@ -2387,7 +2390,7 @@
+-         double var28;
+          double var30;
++         double var32;
+  
+ -        if (!this.blockAccess.doesBlockHaveSolidTopSurface(par2, par3 - 1, par4) && !Block.fire.canBlockCatchFire(this.blockAccess, par2, par3 - 1, par4))
+ +        if (!this.blockAccess.doesBlockHaveSolidTopSurface(par2, par3 - 1, par4) && !Block.fire.canBlockCatchFire(this.blockAccess, par2, par3 - 1, par4, UP))
+diff --color -ru forge/patches/minecraft/net/minecraft/entity/Entity.java.patch forge/patches_fixed/minecraft/net/minecraft/entity/Entity.java.patch
+--- forge/patches/minecraft/net/minecraft/entity/Entity.java.patch	2013-02-24 23:57:32.000000000 +0000
++++ forge/patches_fixed/minecraft/net/minecraft/entity/Entity.java.patch	2021-01-01 20:54:32.212634886 +0000
+@@ -64,9 +64,9 @@
+ +                 * https://mojang.atlassian.net/browse/MC-1594
+                  else
+                  {
+-                     double var40 = this.boundingBox.minY - (double)((int)this.boundingBox.minY);
++                     double var39 = this.boundingBox.minY - (double)((int)this.boundingBox.minY);
+ @@ -856,6 +873,7 @@
+-                         this.ySize = (float)((double)this.ySize + var40 + 0.01D);
++                         this.ySize = (float)((double)this.ySize + var39 + 0.01D);
+                      }
+                  }
+ +                */
+diff --color -ru forge/patches/minecraft/net/minecraft/entity/item/EntityMinecart.java.patch forge/patches_fixed/minecraft/net/minecraft/entity/item/EntityMinecart.java.patch
+--- forge/patches/minecraft/net/minecraft/entity/item/EntityMinecart.java.patch	2013-02-24 23:57:32.000000000 +0000
++++ forge/patches_fixed/minecraft/net/minecraft/entity/item/EntityMinecart.java.patch	2021-01-01 20:52:56.421612665 +0000
+@@ -295,7 +295,7 @@
+ -                }
+ +                applyDragAndPushForces();
+  
+-                 Vec3 var54 = this.func_70489_a(this.posX, this.posY, this.posZ);
++                 Vec3 var53 = this.func_70489_a(this.posX, this.posY, this.posZ);
+  
+ @@ -647,30 +571,14 @@
+  
+diff --color -ru forge/patches/minecraft/net/minecraft/entity/player/EntityPlayerMP.java.patch forge/patches_fixed/minecraft/net/minecraft/entity/player/EntityPlayerMP.java.patch
+--- forge/patches/minecraft/net/minecraft/entity/player/EntityPlayerMP.java.patch	2013-02-24 23:57:32.000000000 +0000
++++ forge/patches_fixed/minecraft/net/minecraft/entity/player/EntityPlayerMP.java.patch	2021-01-01 20:08:22.097813982 +0000
+@@ -54,9 +54,9 @@
+  
+ @@ -274,6 +275,7 @@
+                  {
+-                     Chunk var10 = (Chunk)var11.next();
+-                     this.getServerForPlayer().getEntityTracker().func_85172_a(this, var10);
+-+                    MinecraftForge.EVENT_BUS.post(new ChunkWatchEvent.Watch(var10.getChunkCoordIntPair(), this));
++                     Chunk var11 = (Chunk)var10.next();
++                     this.getServerForPlayer().getEntityTracker().func_85172_a(this, var11);
+++                    MinecraftForge.EVENT_BUS.post(new ChunkWatchEvent.Watch(var11.getChunkCoordIntPair(), this));
+                  }
+              }
+          }
+diff --color -ru forge/patches/minecraft/net/minecraft/item/crafting/RecipeFireworks.java.patch forge/patches_fixed/minecraft/net/minecraft/item/crafting/RecipeFireworks.java.patch
+--- forge/patches/minecraft/net/minecraft/item/crafting/RecipeFireworks.java.patch	2013-02-24 23:57:32.000000000 +0000
++++ forge/patches_fixed/minecraft/net/minecraft/item/crafting/RecipeFireworks.java.patch	2021-01-01 12:27:49.380950490 +0000
+@@ -4,23 +4,23 @@
+              {
+                  this.field_92102_a = new ItemStack(Item.firework);
+  
+-+                var15 = new NBTTagCompound();
+++                var16 = new NBTTagCompound();
+                  if (var6 > 0)
+                  {
+--                    var15 = new NBTTagCompound();
+-                     var18 = new NBTTagCompound("Fireworks");
++-                    var16 = new NBTTagCompound();
++                     var19 = new NBTTagCompound("Fireworks");
+                      NBTTagList var25 = new NBTTagList("Explosions");
+  
+ @@ -110,9 +110,9 @@
+-                     var18.setTag("Explosions", var25);
+-                     var18.setByte("Flight", (byte)var4);
+-                     var15.setTag("Fireworks", var18);
+--                    this.field_92102_a.setTagCompound(var15);
++                     var19.setTag("Explosions", var25);
++                     var19.setByte("Flight", (byte)var4);
++                     var16.setTag("Fireworks", var19);
++-                    this.field_92102_a.setTagCompound(var16);
+ -                }
+ -
+ +                }
+ +
+-+                this.field_92102_a.setTagCompound(var15);
+++                this.field_92102_a.setTagCompound(var16);
+                  return true;
+              }
+              else if (var4 == 1 && var3 == 0 && var6 == 0 && var5 > 0 && var8 <= 1)
+diff --color -ru forge/patches/minecraft/net/minecraft/world/chunk/Chunk.java.patch forge/patches_fixed/minecraft/net/minecraft/world/chunk/Chunk.java.patch
+--- forge/patches/minecraft/net/minecraft/world/chunk/Chunk.java.patch	2013-02-24 23:57:32.000000000 +0000
++++ forge/patches_fixed/minecraft/net/minecraft/world/chunk/Chunk.java.patch	2021-01-01 20:41:21.174416023 +0000
+@@ -426,12 +426,12 @@
+          }
+  
+          this.generateHeightMap();
+--        Iterator var10 = this.chunkTileEntityMap.values().iterator();
++-        Iterator var11 = this.chunkTileEntityMap.values().iterator();
+ -
+--        while (var10.hasNext())
++-        while (var11.hasNext())
+ -        {
+--            TileEntity var11 = (TileEntity)var10.next();
+--            var11.updateContainingBlockInfo();
++-            TileEntity var10 = (TileEntity)var11.next();
++-            var10.updateContainingBlockInfo();
+ +
+ +        List<TileEntity> invalidList = new ArrayList<TileEntity>();
+ +        iterator = chunkTileEntityMap.values().iterator();
+diff --color -ru forge/patches/minecraft/net/minecraft/world/gen/feature/WorldGenDungeons.java.patch forge/patches_fixed/minecraft/net/minecraft/world/gen/feature/WorldGenDungeons.java.patch
+--- forge/patches/minecraft/net/minecraft/world/gen/feature/WorldGenDungeons.java.patch	2013-02-24 23:57:32.000000000 +0000
++++ forge/patches_fixed/minecraft/net/minecraft/world/gen/feature/WorldGenDungeons.java.patch	2021-01-01 20:43:15.231454708 +0000
+@@ -31,7 +31,7 @@
+ +                                        WeightedRandomChestContent.generateChestContents(par2Random, info.getItems(par2Random), var16, info.getCount(par2Random));
+                                      }
+  
+-                                     break label210;
++                                     break label113;
+ @@ -174,8 +173,7 @@
+       */
+      private ItemStack pickCheckLootItem(Random par1Random)
+diff --color -ru forge/patches/minecraft/net/minecraft/world/gen/layer/GenLayer.java.patch forge/patches_fixed/minecraft/net/minecraft/world/gen/layer/GenLayer.java.patch
+--- forge/patches/minecraft/net/minecraft/world/gen/layer/GenLayer.java.patch	2013-02-24 23:57:32.000000000 +0000
++++ forge/patches_fixed/minecraft/net/minecraft/world/gen/layer/GenLayer.java.patch	2021-01-01 20:44:56.462486312 +0000
+@@ -16,7 +16,7 @@
+          }
+ +        var4 = getModdedBiomeSize(par2WorldType, var4);
+  
+-         GenLayer var5 = GenLayerZoom.func_75915_a(1000L, var16, 0);
++         GenLayer var5 = GenLayerZoom.func_75915_a(1000L, var15, 0);
+          GenLayerRiverInit var13 = new GenLayerRiverInit(100L, var5);
+ @@ -151,4 +155,11 @@
+       * amounts, or biomeList[] indices based on the particular GenLayer subclass.
+diff --color -ru forge/patches/minecraft/net/minecraft/world/SpawnerAnimals.java.patch forge/patches_fixed/minecraft/net/minecraft/world/SpawnerAnimals.java.patch
+--- forge/patches/minecraft/net/minecraft/world/SpawnerAnimals.java.patch	2013-02-24 23:57:32.000000000 +0000
++++ forge/patches_fixed/minecraft/net/minecraft/world/SpawnerAnimals.java.patch	2021-01-01 20:28:40.516983040 +0000
+@@ -23,13 +23,13 @@
+ @@ -93,6 +100,9 @@
+                  if ((!var35.getPeacefulCreature() || par2) && (var35.getPeacefulCreature() || par1) && (!var35.getAnimal() || par3) && par0WorldServer.countEntities(var35.getCreatureClass()) <= var35.getMaxNumberOfCreature() * eligibleChunksForSpawning.size() / 256)
+                  {
+-                     Iterator var37 = eligibleChunksForSpawning.keySet().iterator();
++                     Iterator var36 = eligibleChunksForSpawning.keySet().iterator();
+ +                    ArrayList<ChunkCoordIntPair> tmp = new ArrayList(eligibleChunksForSpawning.keySet());
+ +                    Collections.shuffle(tmp);
+-+                    var37 = tmp.iterator();
+++                    var36 = tmp.iterator();
+                      label110:
+  
+-                     while (var37.hasNext())
++                     while (var36.hasNext())
+ @@ -169,7 +179,8 @@
+  
+                                                              var39.setLocationAndAngles((double)var24, (double)var25, (double)var26, par0WorldServer.rand.nextFloat() * 360.0F, 0.0F);
+diff --color -ru forge/fml/patches/minecraft/net/minecraft/client/renderer/texturefx/TextureCompassFX.java.patch forge/fml/patches_fixed/minecraft/net/minecraft/client/renderer/texturefx/TextureCompassFX.java.patch
+--- forge/fml/patches/minecraft/net/minecraft/client/renderer/texturefx/TextureCompassFX.java.patch 2013-02-24 23:57:42.000000000 +0000
++++ forge/fml/patches_fixed/minecraft/net/minecraft/client/renderer/texturefx/TextureCompassFX.java.patch 2021-01-01 20:57:08.339669845 +0000
+@@ -57,8 +57,8 @@
+          catch (IOException var5)
+          {
+ @@ -58,7 +76,7 @@
+-         int var17;
+          int var16;
++         int var17;
+  
+ -        for (int var10 = 0; var10 < 256; ++var10)
+ +        for (int var10 = 0; var10 < stileSizeSquare; ++var10)
+@@ -66,18 +66,18 @@
+              int var11 = var8[var10] >> 24 & 255;
+              int var12 = var8[var10] >> 16 & 255;
+ @@ -141,11 +159,11 @@
+-         int var24;
++         int var25;
+          int var26;
+  
+ -        for (var16 = -4; var16 <= 4; ++var16)
+ -        {
+ -            var17 = (int)(8.5D + var31 * (double)var16 * 0.3D);
+--            var18 = (int)(7.5D - var30 * (double)var16 * 0.3D * 0.5D);
++-            var18 = (int)(7.5D - var29 * (double)var16 * 0.3D * 0.5D);
+ -            var19 = var18 * 16 + var17;
+ +        for (var16 = -(stileSizeBase >> 2); var16 <= (stileSizeBase >> 2); ++var16)
+ +        {
+ +            var17 = (int)((stileSizeBase >> 1) + 0.5D + var31 * (double)var16 * 0.3D);
+-+            var18 = (int)((stileSizeBase >> 1) - 0.5D - var30 * (double)var16 * 0.3D * 0.5D);
+++            var18 = (int)((stileSizeBase >> 1) - 0.5D - var29 * (double)var16 * 0.3D * 0.5D);
+ +            var19 = var18 * stileSizeBase + var17;
+              var20 = 100;
+              var21 = 100;
+@@ -88,13 +88,13 @@
+  
+ -        for (var16 = -8; var16 <= 16; ++var16)
+ -        {
+--            var17 = (int)(8.5D + var30 * (double)var16 * 0.3D);
++-            var17 = (int)(8.5D + var29 * (double)var16 * 0.3D);
+ -            var18 = (int)(7.5D + var31 * (double)var16 * 0.3D * 0.5D);
+ -            var19 = var18 * 16 + var17;
+ +
+ +        for (var16 = -(stileSizeBase>>2); var16 <= stileSizeBase; ++var16)
+ +        {
+-+            var17 = (int)((stileSizeBase >> 1) + 0.5D + var30 * (double)var16 * 0.3D);
+++            var17 = (int)((stileSizeBase >> 1) + 0.5D + var29 * (double)var16 * 0.3D);
+ +            var18 = (int)((stileSizeBase >> 1) - 0.5D + var31 * (double)var16 * 0.3D * 0.5D);
+ +            var19 = var18 * stileSizeBase + var17;
+              var20 = var16 >= 0 ? 255 : 100;
+diff --color -ru forge/fml/patches/minecraft/net/minecraft/world/chunk/storage/AnvilChunkLoader.java.patch forge/fml/patches_fixed/minecraft/net/minecraft/world/chunk/storage/AnvilChunkLoader.java.patch
+--- forge/fml/patches/minecraft/net/minecraft/world/chunk/storage/AnvilChunkLoader.java.patch 2013-02-24 23:57:42.000000000 +0000
++++ forge/fml/patches_fixed/minecraft/net/minecraft/world/chunk/storage/AnvilChunkLoader.java.patch 2021-01-01 12:24:04.168772634 +0000
+@@ -15,14 +15,14 @@
+                  p_75820_1_.field_76644_m = true;
+                  var11 = new NBTTagCompound();
+  
+--                if (var21.func_70039_c(var11))
++-                if (var20.func_70039_c(var11))
+ -                {
+ -                    var16.func_74742_a(var11);
+ -                }
+ +
+ +                try
+ +                {
+-+                    if (var21.func_70039_c(var11))
+++                    if (var20.func_70039_c(var11))
+ +                    {
+ +                        var16.func_74742_a(var11);
+ +                    }
+@@ -31,27 +31,27 @@
+ +                {
+ +                    FMLLog.log(Level.SEVERE, e,
+ +                            "An Entity type %s has thrown an exception trying to write state. It will not persist. Report this to the mod author",
+-+                            var21.getClass().getName());
+++                            var20.getClass().getName());
+ +                 }
+              }
+          }
+  
+ @@ -262,8 +276,17 @@
+          {
+-             TileEntity var22 = (TileEntity)var18.next();
++             TileEntity var21 = (TileEntity)var18.next();
+              var11 = new NBTTagCompound();
+--            var22.func_70310_b(var11);
++-            var21.func_70310_b(var11);
+ -            var17.func_74742_a(var11);
+ +            try
+ +            {
+-+                var22.func_70310_b(var11);
+++                var21.func_70310_b(var11);
+ +                var17.func_74742_a(var11);
+ +            }
+ +            catch (Exception e)
+ +            {
+ +                FMLLog.log(Level.SEVERE, e,
+ +                        "A TileEntity type %s has throw an exception trying to write state. It will not persist. Report this to the mod author",
+-+                        var22.getClass().getName());
+++                        var21.getClass().getName());
+ +            }
+          }
+  

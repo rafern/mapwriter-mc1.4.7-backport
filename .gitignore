@@ -1,0 +1,9 @@
+# ST3 project files
+/mapwriter-mc1.4.7-backport.sublime-project
+/mapwriter-mc1.4.7-backport.sublime-workspace
+# Minecraft Forge + MCP environment
+/forge/
+# Inputs for setup script
+/forge-1.4.7-6.6.2.534-src.zip
+/mcp726a.zip
+/mc_resources

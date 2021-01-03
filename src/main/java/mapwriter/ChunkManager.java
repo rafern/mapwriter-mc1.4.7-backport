@@ -22,6 +22,10 @@ public class ChunkManager {
 	
 	public synchronized void close() {
 		this.closed = true;
+		this.clear();
+	}
+
+	public synchronized void clear() {
 		this.saveChunks();
 		this.chunkMap.clear();
 	}
@@ -80,32 +84,41 @@ public class ChunkManager {
 	}
 	
 	public void updateUndergroundChunks() {
+		this.mw.mc.mcProfiler.startSection("updateUndergroundChunks");
 		int chunkArrayX = (this.mw.playerXInt >> 4) - 1;
 		int chunkArrayZ = (this.mw.playerZInt >> 4) - 1;
 		MwChunk[] chunkArray = new MwChunk[9];
 		for (int z = 0; z < 3; z++) {
 			for (int x = 0; x < 3; x++) {
+				this.mw.mc.mcProfiler.startSection("getChunkFromChunkCoords");
 				Chunk chunk = this.mw.mc.theWorld.getChunkFromChunkCoords(
 					chunkArrayX + x,
 					chunkArrayZ + z
 				);
+				this.mw.mc.mcProfiler.endStartSection("copyToMwChunk");
 				if (!chunk.isEmpty()) {
 					chunkArray[(z * 3) + x] = copyToMwChunk(chunk);
 				}
+				this.mw.mc.mcProfiler.endSection();
 			}
 		}
+		this.mw.mc.mcProfiler.endSection();
 	}
 	
 	public void updateSurfaceChunks() {
+		this.mw.mc.mcProfiler.startSection("updateSurfaceChunks");
 		int chunksToUpdate = Math.min(this.chunkMap.size(), this.mw.chunksPerTick);
 		MwChunk[] chunkArray = new MwChunk[chunksToUpdate];
 		for (int i = 0; i < chunksToUpdate; i++) {
+			this.mw.mc.mcProfiler.startSection("getNextEntry");
 			Map.Entry<Chunk, Integer> entry = this.chunkMap.getNextEntry();
+			this.mw.mc.mcProfiler.endSection();
 			if (entry != null) {
 				// if this chunk is within a certain distance to the player then
 				// add it to the viewed set
 				Chunk chunk = entry.getKey();
 				int flags = entry.getValue();
+				this.mw.mc.mcProfiler.startSection("distToChunkSq");
 				if (MwUtil.distToChunkSq(this.mw.playerXInt, this.mw.playerZInt, chunk) <= this.mw.maxChunkSaveDistSq) {
 					flags |= (VISIBLE_FLAG | VIEWED_FLAG);
 				} else {
@@ -113,15 +126,20 @@ public class ChunkManager {
 				}
 				entry.setValue(flags);
 				
+				this.mw.mc.mcProfiler.endStartSection("copyToMwChunk");
 				if ((flags & VISIBLE_FLAG) != 0) {
 					chunkArray[i] = copyToMwChunk(chunk);
 				} else {
 					chunkArray[i] = null;
 				}
+				this.mw.mc.mcProfiler.endSection();
 			}
 		}
 		
+		this.mw.mc.mcProfiler.startSection("addTaskUpdateSurfaceChunksTask");
 		this.mw.executor.addTask(new UpdateSurfaceChunksTask(this.mw, chunkArray));
+		this.mw.mc.mcProfiler.endSection();
+		this.mw.mc.mcProfiler.endSection();
 	}
 	
 	public void onTick() {

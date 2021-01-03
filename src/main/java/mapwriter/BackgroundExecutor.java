@@ -7,7 +7,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import mapwriter.tasks.Task;
-
+import java.util.Date;
+import java.util.HashMap;
 
 
 /*
@@ -50,6 +51,11 @@ public class BackgroundExecutor {
 	private ExecutorService executor;
 	private LinkedList<Task> taskQueue;
 	public boolean closed = false;
+
+	private HashMap<String, Integer> diagTypes = new HashMap<String, Integer>();
+	private int diagAdded = 0;
+	private int diagDone = 0;
+	private long diagTime = 0;
 	
 	public BackgroundExecutor() {
 		this.executor = Executors.newSingleThreadExecutor();
@@ -59,6 +65,14 @@ public class BackgroundExecutor {
 	// add a task to the queue
 	public boolean addTask(Task task) {
 		if (!this.closed) {
+			diagAdded++;
+			String typeName = task.getClass().getSimpleName();
+			Integer curTypeCount = diagTypes.get(typeName);
+			if(curTypeCount == null)
+				curTypeCount = 1;
+			else
+				curTypeCount++;
+			diagTypes.put(typeName, curTypeCount);
 			Future<?> future = this.executor.submit(task);
 			task.setFuture(future);
 			this.taskQueue.add(task);
@@ -72,10 +86,22 @@ public class BackgroundExecutor {
 	// If it has completed then call onComplete for the task.
 	// If it has not completed then push the task back on the queue.
 	public boolean processTaskQueue() {
+		long curTime = (new Date()).getTime();
+		if(curTime - diagTime > 10000) {
+			diagTime = curTime;
+			MwUtil.log("MwExecutor diagnostics: %d tasks; %d added, %d done in last 10 seconds. Added types:", this.taskQueue.size(), diagAdded, diagDone);
+			for(HashMap.Entry<String, Integer> entry : this.diagTypes.entrySet()) {
+				MwUtil.log("- %s: %d", entry.getKey(), entry.getValue());
+				this.diagTypes.put(entry.getKey(), 0);
+			}
+			diagAdded = 0;
+			diagDone = 0;
+		}
 		boolean processed = false;
 		Task task = this.taskQueue.poll();
 		if (task != null) {
 			if (task.isDone()) {
+				diagDone++;
 				task.printException();
 				task.onComplete();
 				processed = true;

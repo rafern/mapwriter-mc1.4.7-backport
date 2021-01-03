@@ -590,11 +590,11 @@ public class Mw {
 	}
 	
 	public void onWorldLoad(World world) {
-		//MwUtil.log("onWorldLoad: %s, name %s, dimension %d",
-		//		world,
-		//		world.getWorldInfo().getWorldName(),
-		//		world.provider.dimensionId);
-		
+		MwUtil.log("onWorldLoad: %s, name %s, dimension %d",
+				world,
+				world.getWorldInfo().getWorldName(),
+				world.provider.dimensionId);
+
 		this.playerDimension = world.provider.dimensionId;
 		if (this.ready) {
 			this.addDimension(this.playerDimension);
@@ -609,15 +609,11 @@ public class Mw {
 		//		world.provider.dimensionId);
 	}
 	
-	public void onTick() {
+	public void onRenderTick() {
 		this.load();
 		if (this.ready && (this.mc.thePlayer != null)) {
-			
+			this.mc.mcProfiler.startSection("MwOnRenderTick");
 			this.updatePlayer();
-			
-			if (this.undergroundMode && ((this.tickCounter % 30) == 0)) {
-				this.undergroundMapTexture.update();
-			}
 			
 			// check if the game over screen is being displayed and if so 
 			// (thanks to Chrixian for this method of checking when the player is dead)
@@ -635,16 +631,31 @@ public class Mw {
 					this.miniMap.drawCurrentMap();
 				}
 			}
-			
-			// process background tasks
-			int maxTasks = 50;
-			while (!this.executor.processTaskQueue() && (maxTasks > 0)) {
-				maxTasks--;
+			this.mc.mcProfiler.endSection();
+		}
+	}
+
+	public void onPlayerTick() {
+		this.load();
+		if (this.ready && (this.mc.thePlayer != null)) {
+			this.mc.mcProfiler.startSection("MwOnPlayerTick");
+			this.mc.mcProfiler.startSection("undergroundMapTextureUpdate");
+			if (this.undergroundMode && ((this.tickCounter % 30) == 0)) {
+				this.undergroundMapTexture.update();
 			}
 			
+			// process background tasks
+			this.mc.mcProfiler.endStartSection("processTaskQueue");
+			int maxRetries = 50;
+			while (!this.executor.processTaskQueue() && (maxRetries > 0)) {
+				maxRetries--;
+			}
+			
+			this.mc.mcProfiler.endStartSection("chunkManagerOnTick");
 			this.chunkManager.onTick();
 			
 			// update GL texture of mapTexture if updated
+			this.mc.mcProfiler.endStartSection("mapTextureProcessTextureUpdates");
 			this.mapTexture.processTextureUpdates();
 			
 			// let the renderEngine know we have changed the bound texture.
@@ -653,9 +664,12 @@ public class Mw {
 	    	//if (this.tickCounter % 100 == 0) {
 	    	//	MwUtil.log("tick %d", this.tickCounter);
 	    	//}
+			this.mc.mcProfiler.endStartSection("playerTrailOnTick");
 	    	this.playerTrail.onTick();
 	    	
+			this.mc.mcProfiler.endSection();
 			this.tickCounter++;
+			this.mc.mcProfiler.endSection();
 		}
 	}
 	

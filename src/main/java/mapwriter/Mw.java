@@ -7,6 +7,7 @@ import mapwriter.gui.MwGui;
 import mapwriter.gui.MwGuiMarkerDialog;
 import mapwriter.map.*;
 import mapwriter.overlay.OverlaySlime;
+//import mapwriter.overlay.OverlayDebug;
 import mapwriter.region.BlockColours;
 import mapwriter.region.RegionManager;
 import mapwriter.tasks.CloseRegionManagerTask;
@@ -543,6 +544,7 @@ public class Mw {
 		if (this.ready) {
 			this.ready = false;
 			
+			//OverlayDebug.clear();
 			this.chunkManager.close();
 			this.chunkManager = null;
 			
@@ -590,13 +592,19 @@ public class Mw {
 	}
 	
 	public void onWorldLoad(World world) {
-		MwUtil.log("onWorldLoad: %s, name %s, dimension %d",
-				world,
-				world.getWorldInfo().getWorldName(),
-				world.provider.dimensionId);
+		//MwUtil.log("onWorldLoad: %s, name %s, dimension %d",
+		//		world,
+		//		world.getWorldInfo().getWorldName(),
+		//		world.provider.dimensionId);
 
 		this.playerDimension = world.provider.dimensionId;
 		if (this.ready) {
+			// For some reason, chunk unload events are not sent when switching
+			// World (dimension), so clear chunks when switching dimension.
+			// Maybe it's because the World object itself is unloaded, instead
+			// of each individual chunk.
+			this.chunkManager.clear();
+			//OverlayDebug.clear();
 			this.addDimension(this.playerDimension);
 			this.miniMap.view.setDimension(this.playerDimension);
 		}
@@ -678,9 +686,15 @@ public class Mw {
 		this.load();
 		if ((chunk != null) && (chunk.worldObj instanceof net.minecraft.client.multiplayer.WorldClient)) {
 			if (this.ready) {
+				if(chunk.worldObj != this.mc.theWorld) {
+					MwUtil.logInfo("attempt to add chunk that doesn't belong to current world (%d, %d)", chunk.xPosition, chunk.zPosition);
+					return;
+				}
+				/*if(this.chunkManager.addChunk(chunk))
+					OverlayDebug.onChunkLoad(chunk.xPosition, chunk.zPosition, chunk.worldObj.provider.dimensionId);*/
 				this.chunkManager.addChunk(chunk);
 			} else {
-				MwUtil.logInfo("missed chunk (%d, %d)", chunk.xPosition, chunk.zPosition);
+				MwUtil.logInfo("missed chunk load (%d, %d)", chunk.xPosition, chunk.zPosition);
 			}
 		}
 	}
@@ -688,8 +702,17 @@ public class Mw {
 	// remove chunk from the set of loaded chunks.
 	// convert to mwchunk and write chunk to region file if in multiplayer.
 	public void onChunkUnload(Chunk chunk) {
-		if (this.ready && (chunk != null) && (chunk.worldObj instanceof net.minecraft.client.multiplayer.WorldClient)) {
-			this.chunkManager.removeChunk(chunk);
+		if ((chunk != null) && (chunk.worldObj instanceof net.minecraft.client.multiplayer.WorldClient)) {
+			if(this.ready) {
+				if(chunk.worldObj != this.mc.theWorld) {
+					MwUtil.logInfo("attempt to remove chunk that doesn't belong to current world (%d, %d)", chunk.xPosition, chunk.zPosition);
+					return;
+				}
+				this.chunkManager.removeChunk(chunk);
+				//OverlayDebug.onChunkUnload(chunk.xPosition, chunk.zPosition, chunk.worldObj.provider.dimensionId);
+			} else {
+				MwUtil.logInfo("missed chunk unload (%d, %d)", chunk.xPosition, chunk.zPosition);
+			}
 		}
 	}
 	

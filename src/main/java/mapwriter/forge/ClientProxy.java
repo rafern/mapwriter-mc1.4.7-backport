@@ -6,6 +6,7 @@ import mapwriter.Mw;
 import mapwriter.api.MwAPI;
 import mapwriter.overlay.OverlayGrid;
 import mapwriter.overlay.OverlaySlime;
+//import mapwriter.overlay.OverlayDebug;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.common.MinecraftForge;
 import cpw.mods.fml.common.network.NetworkRegistry;
@@ -35,6 +36,7 @@ public class ClientProxy extends CommonProxy {
 	public void postInit() {
 		MwAPI.registerDataProvider("Slime", new OverlaySlime());
 		MwAPI.registerDataProvider("Grid", new OverlayGrid());
+		//MwAPI.registerDataProvider("Debug", new OverlayDebug());
 		//MwAPI.registerDataProvider("Checker", new OverlayChecker());
 		//MwAPI.setCurrentDataProvider("Slime");
 	}

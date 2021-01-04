@@ -4,6 +4,7 @@ import mapwriter.Mw;
 import mapwriter.map.MapTexture;
 import mapwriter.region.MwChunk;
 import mapwriter.region.RegionManager;
+//import mapwriter.overlay.OverlayDebug;
 
 public class UpdateSurfaceChunksTask extends Task {
 	MwChunk[] chunkArray;
@@ -28,6 +29,7 @@ public class UpdateSurfaceChunksTask extends Task {
 					chunk.x << 4, chunk.z << 4,
 					MwChunk.SIZE, MwChunk.SIZE, chunk.dimension
 				);
+				//OverlayDebug.onChunkRedraw(chunk.x, chunk.z, chunk.dimension);
 			}
 		}
 	}

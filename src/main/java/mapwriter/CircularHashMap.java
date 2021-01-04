@@ -84,11 +84,16 @@ public class CircularHashMap<K, V> {
 			
 			this.headNode = node;
 			
+			// There was no value previously, return null
+			return null;
 		} else {
 			// update node
+			V oldValue = node.value;
 			node.value = value;
+
+			// There was a value previously, return old value
+			return oldValue;
 		}
-		return value;
 	}
 	
 	public V remove(Object key) {

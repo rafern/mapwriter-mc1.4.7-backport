@@ -5,13 +5,23 @@ import java.util.Map;
 import mapwriter.region.MwChunk;
 import mapwriter.tasks.SaveChunkTask;
 import mapwriter.tasks.UpdateSurfaceChunksTask;
+import net.minecraft.world.ChunkCoordIntPair;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 
 public class ChunkManager {
+	public class FlaggedChunk {
+		public Chunk chunk;
+		public int flags = 0;
+
+		public FlaggedChunk(Chunk chunk) {
+			this.chunk = chunk;
+		}
+	}
+
 	public Mw mw;
 	private boolean closed = false;
-	private CircularHashMap<Chunk, Integer> chunkMap = new CircularHashMap<Chunk, Integer>();
+	private CircularHashMap<ChunkCoordIntPair, FlaggedChunk> chunkMap = new CircularHashMap<ChunkCoordIntPair, FlaggedChunk>();
 	
 	private static final int VISIBLE_FLAG = 0x01;
 	private static final int VIEWED_FLAG = 0x02;
@@ -57,34 +67,42 @@ public class ChunkManager {
 				msbArray, lsbArray, metaArray, lightingArray, chunk.getBiomeArray());
 	}
 	
-	public synchronized void addChunk(Chunk chunk) {
+	public synchronized boolean addChunk(Chunk chunk) {
+		// Returns true if the new chunk was added, or false if the chunk was
+		// ignored or replaced an old one
 		if (!this.closed && (chunk != null)) {
-			this.chunkMap.put(chunk, 0);
+			// Doing this resets the flags for this chunk if there was a chunk
+			// at these coordinates, but this is harmless as it just causes it
+			// to save, as it should since its a new chunk
+			return this.chunkMap.put(chunk.getChunkCoordIntPair(), new FlaggedChunk(chunk)) == null;
 		}
+		else
+			return false;
 	}
 	
 	public synchronized void removeChunk(Chunk chunk) {
 		if (!this.closed && (chunk != null)) {
-            if(!this.chunkMap.containsKey(chunk)) return; //FIXME: Is this failsafe enough for unloading?
-			int flags = this.chunkMap.get(chunk);
-			if ((flags & VIEWED_FLAG) != 0) {
-				this.addSaveChunkTask(chunk);
+			ChunkCoordIntPair key = chunk.getChunkCoordIntPair();
+            if(!this.chunkMap.containsKey(key)) return;
+            FlaggedChunk flaggedChunk = this.chunkMap.get(key);
+			if ((flaggedChunk.flags & VIEWED_FLAG) != 0) {
+				this.addSaveChunkTask(flaggedChunk.chunk);
 			}
-			this.chunkMap.remove(chunk);
+			this.chunkMap.remove(key);
 		}
 	}
 	
 	public synchronized void saveChunks() {
-		for (Map.Entry<Chunk, Integer> entry : this.chunkMap.entrySet()) {
-			int flags = entry.getValue();
-			if ((flags & VIEWED_FLAG) != 0) {
-				this.addSaveChunkTask(entry.getKey());
+		for (FlaggedChunk flaggedChunk : this.chunkMap.values()) {
+			if ((flaggedChunk.flags & VIEWED_FLAG) != 0) {
+				this.addSaveChunkTask(flaggedChunk.chunk);
 			}
 		}
 	}
 	
 	public void updateUndergroundChunks() {
-		this.mw.mc.mcProfiler.startSection("updateUndergroundChunks");
+		// FIXME this does nothing, what did they want to do here?
+		/*this.mw.mc.mcProfiler.startSection("updateUndergroundChunks");
 		int chunkArrayX = (this.mw.playerXInt >> 4) - 1;
 		int chunkArrayZ = (this.mw.playerZInt >> 4) - 1;
 		MwChunk[] chunkArray = new MwChunk[9];
@@ -102,7 +120,7 @@ public class ChunkManager {
 				this.mw.mc.mcProfiler.endSection();
 			}
 		}
-		this.mw.mc.mcProfiler.endSection();
+		this.mw.mc.mcProfiler.endSection();*/
 	}
 	
 	public void updateSurfaceChunks() {
@@ -111,24 +129,22 @@ public class ChunkManager {
 		MwChunk[] chunkArray = new MwChunk[chunksToUpdate];
 		for (int i = 0; i < chunksToUpdate; i++) {
 			this.mw.mc.mcProfiler.startSection("getNextEntry");
-			Map.Entry<Chunk, Integer> entry = this.chunkMap.getNextEntry();
+			Map.Entry<ChunkCoordIntPair, FlaggedChunk> entry = this.chunkMap.getNextEntry();
 			this.mw.mc.mcProfiler.endSection();
 			if (entry != null) {
 				// if this chunk is within a certain distance to the player then
 				// add it to the viewed set
-				Chunk chunk = entry.getKey();
-				int flags = entry.getValue();
+				FlaggedChunk flaggedChunk = entry.getValue();
 				this.mw.mc.mcProfiler.startSection("distToChunkSq");
-				if (MwUtil.distToChunkSq(this.mw.playerXInt, this.mw.playerZInt, chunk) <= this.mw.maxChunkSaveDistSq) {
-					flags |= (VISIBLE_FLAG | VIEWED_FLAG);
+				if (MwUtil.distToChunkSq(this.mw.playerXInt, this.mw.playerZInt, flaggedChunk.chunk) <= this.mw.maxChunkSaveDistSq) {
+					flaggedChunk.flags |= (VISIBLE_FLAG | VIEWED_FLAG);
 				} else {
-					flags &= ~VISIBLE_FLAG;
+					flaggedChunk.flags &= ~VISIBLE_FLAG;
 				}
-				entry.setValue(flags);
 				
 				this.mw.mc.mcProfiler.endStartSection("copyToMwChunk");
-				if ((flags & VISIBLE_FLAG) != 0) {
-					chunkArray[i] = copyToMwChunk(chunk);
+				if ((flaggedChunk.flags & VISIBLE_FLAG) != 0) {
+					chunkArray[i] = copyToMwChunk(flaggedChunk.chunk);
 				} else {
 					chunkArray[i] = null;
 				}
